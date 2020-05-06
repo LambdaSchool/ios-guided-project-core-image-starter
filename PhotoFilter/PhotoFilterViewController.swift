@@ -12,6 +12,18 @@ class PhotoFilterViewController: UIViewController {
     
     var originalImage: UIImage?{
         didSet {
+            guard let originalImage = originalImage else { return }
+            var scaledSize = imageView.bounds.size
+            let scale: CGFloat = 0.5//UIScreen.main.scale
+            scaledSize = CGSize(width: scaledSize.width*scale, height: scaledSize.height*scale)
+            guard let scaledUIImage = originalImage.imageByScaling(toSize: scaledSize) else { return }
+            let scaledUIImage = originalImage.imageByScaling(toSize: scaledSize)
+            scaledImage = CIImage(image: scaledUIImage)
+        }
+    }
+    
+    var scaledImage: CIImage? {
+        didSet {
             updateImage()
         }
     }
@@ -26,15 +38,15 @@ class PhotoFilterViewController: UIViewController {
          originalImage = imageView.image
 	}
 	// MARK: Actions
-    private func image(byFiltering image: UIImage) -> UIImage {
-        let inputImage = CIImage(image: image)
+    private func image(byFiltering inputImage: CIImage) -> UIImage {
+        
         filter.inputImage = inputImage
         filter.saturation = saturationSlider.value
         filter.brightness = brightnessSlider.value
         filter.contrast = contrastSlider.value
         
-        guard let outputImage = filter.outputImage else { return image}
-        guard let renderedImage = context.createCGImage(outputImage, from: outputImage.extent) else { return image}
+        guard let outputImage = filter.outputImage else { return originalImage!}
+        guard let renderedImage = context.createCGImage(outputImage, from: outputImage.extent) else { return originalImage!}
         return UIImage(cgImage: renderedImage)
     }
     
