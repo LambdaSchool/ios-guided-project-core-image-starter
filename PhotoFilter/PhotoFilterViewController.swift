@@ -9,7 +9,7 @@ class PhotoFilterViewController: UIViewController {
 	@IBOutlet weak var contrastSlider: UISlider!
 	@IBOutlet weak var saturationSlider: UISlider!
 	@IBOutlet weak var imageView: UIImageView!
-    
+    @IBOutlet weak var blurSlider: UISlider!
     
     var originalImage: UIImage?{
         didSet {
@@ -31,11 +31,12 @@ class PhotoFilterViewController: UIViewController {
     
     private let context = CIContext()
     private let colorControlsFilter = CIFilter.colorControls()
+    private let blurFilter = CIFilter.gaussianBlur()
 	
     override func viewDidLoad() {
 		super.viewDidLoad()
-//        let filter = CIFilter.gaussianBlur()
-//        print(filter.attributes)
+        let filter = CIFilter.gaussianBlur()
+        print(filter.attributes)
          originalImage = imageView.image
 	}
 	// MARK: Actions
@@ -45,6 +46,9 @@ class PhotoFilterViewController: UIViewController {
         colorControlsFilter.saturation = saturationSlider.value
         colorControlsFilter.brightness = brightnessSlider.value
         colorControlsFilter.contrast = contrastSlider.value
+        
+        blurFilter.inputImage = colorControlsFilter.outputImage
+        blurFilter.radius = blurSlider.value
         
         guard let outputImage = colorControlsFilter.outputImage else { return originalImage!}
         guard let renderedImage = context.createCGImage(outputImage, from: outputImage.extent) else { return originalImage!}
@@ -123,7 +127,7 @@ extension PhotoFilterViewController: UIImagePickerControllerDelegate, UINavigati
         picker.dismiss(animated: true, completion: nil)
     }
     
-    func imagePickerController(_ picker: UIImagePickerController, dsdidFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         if let image = info[.editedImage] as? UIImage {
             originalImage = image
         } else if let image = info[.originalImage] as? UIImage {
