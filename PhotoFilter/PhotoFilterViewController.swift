@@ -13,19 +13,23 @@ class PhotoFilterViewController: UIViewController {
     
     var originalImage: UIImage?{
         didSet {
-            guard let originalImage = originalImage else { return }
+            guard let originalImage = originalImage else {
+            scaledImage = nil
+                return
+            }
             var scaledSize = imageView.bounds.size
-            let scale: CGFloat = 0.5//UIScreen.main.scale
+            let scale = UIScreen.main.scale
+
             scaledSize = CGSize(width: scaledSize.width*scale, height: scaledSize.height*scale)
             guard let scaledUIImage = originalImage.imageByScaling(toSize: scaledSize) else { return }
-            let scaledUIImage = originalImage.imageByScaling(toSize: scaledSize)
+//            scaledUIImage = originalImage.imageByScaling(toSize: scaledSize)
             scaledImage = CIImage(image: scaledUIImage)
         }
     }
     
     var scaledImage: CIImage? {
         didSet {
-            updateImage()
+            
         }
     }
     
@@ -40,7 +44,7 @@ class PhotoFilterViewController: UIViewController {
          originalImage = imageView.image
 	}
 	// MARK: Actions
-    private func image(byFiltering inputImage: CIImage) -> UIImage {
+    private func image(byFiltering inputImage: CIImage) -> UIImage? {
         
         colorControlsFilter.inputImage = inputImage
         colorControlsFilter.saturation = saturationSlider.value
@@ -56,8 +60,8 @@ class PhotoFilterViewController: UIViewController {
     }
     
     private func updateImage() {
-        if let originalImage = originalImage {
-            imageView.image = originalImage
+        if let scaledImage = scaledImage {
+            imageView.image = image(byFiltering: scaledImage)
         } else {
             imageView.image = nil
         }
@@ -83,7 +87,7 @@ class PhotoFilterViewController: UIViewController {
 	@IBAction func savePhotoButtonPressed(_ sender: UIButton) {
         guard let originalImage = originalImage, let ciImage = CIImage(image: originalImage) else { return }
         
-        let processedImage = self.image(byFiltering: ciImage)
+        guard let processedImage = image(byFiltering: ciImage) else {return}
         
         PHPhotoLibrary.requestAuthorization { status in
             guard status == .authorized else { return }
@@ -95,7 +99,7 @@ class PhotoFilterViewController: UIViewController {
                     return
                 }
                 DispatchQueue.main.async {
-                    
+                    self.presentSuccessfulSaveAlert()
                 }
             }
         }
